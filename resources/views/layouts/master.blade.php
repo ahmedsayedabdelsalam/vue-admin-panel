@@ -10,13 +10,17 @@ scratch. This page gets rid of all links and provides the needed markup only.
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
 
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <title>AdminLTE 3 | Starter</title>
+    <link rel="icon" href="/img/favicon-96x96.png">
 
     <!-- app style -->
     <link rel="stylesheet" href="/css/app.css">
 </head>
 <body class="hold-transition sidebar-mini">
-<div class="wrapper">
+<div class="wrapper" id="app">
 
     <!-- Navbar -->
     <nav class="main-header navbar navbar-expand bg-white navbar-light border-bottom">
@@ -28,17 +32,14 @@ scratch. This page gets rid of all links and provides the needed markup only.
         </ul>
 
         <!-- SEARCH FORM -->
-        <form class="form-inline ml-3">
-            <div class="input-group input-group-sm">
-                <input class="form-control form-control-navbar" type="search" placeholder="Search" aria-label="Search">
-                <div class="input-group-append">
-                    <button class="btn btn-navbar" type="submit">
-                        <i class="fa fa-search"></i>
-                    </button>
-                </div>
+        <div class="input-group input-group-sm">
+            <input class="form-control form-control-navbar" type="search" placeholder="Search" aria-label="Search" v-model="searchField" @keyup.enter="search" @keyup="instantSearch">
+            <div class="input-group-append">
+                <button class="btn btn-navbar" @click="search">
+                    <i class="fa fa-search"></i>
+                </button>
             </div>
-        </form>
-
+        </div>
     </nav>
     <!-- /.navbar -->
 
@@ -59,7 +60,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                     <img src="/img/user2-160x160.jpg" class="img-circle elevation-2" alt="User Image">
                 </div>
                 <div class="info">
-                    <a href="#" class="d-block">{{ Auth::user()->name }}</a>
+                    <a href="#" class="d-block">{{ Auth::user()->name }} | {{ Auth::user()->type }}</a>
                 </div>
             </div>
 
@@ -69,48 +70,52 @@ scratch. This page gets rid of all links and provides the needed markup only.
                     <!-- Add icons to the links using the .nav-icon class
                          with font-awesome or any other icon font library -->
                     <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="fa fa-tachometer-alt nav-icon"></i>
+                        <router-link to="/dashboard" class="nav-link">
+                            <i class="fa fa-tachometer-alt nav-icon blue"></i>
                             <p>Dashboard</p>
-                        </a>
+                        </router-link>
                     </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="fa fa-user nav-icon"></i>
-                            <p>Profile</p>
-                        </a>
-                    </li>
+                    @if (Auth::user()->can('isAdmin') || Auth::user()->can('isAuthor'))
                     <li class="nav-item has-treeview">
-                        <a href="#" class="nav-link active">
-                            <i class="nav-icon fas fa-tachometer-alt"></i>
+                        <a href="#" class="nav-link">
+                            <i class="nav-icon fas fa-cog green"></i>
                             <p>
-                                Starter Pages
+                                Management
                                 <i class="right fa fa-angle-left"></i>
                             </p>
                         </a>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a href="#" class="nav-link active">
-                                    <i class="fa fa-circle nav-icon"></i>
-                                    <p>Active Page</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="#" class="nav-link">
-                                    <i class="fa fa-circle nav-icon"></i>
-                                    <p>Inactive Page</p>
-                                </a>
+                                <router-link to="/users" class="nav-link">
+                                    <i class="fas fa-users nav-icon"></i>
+                                    <p>Users</p>
+                                </router-link>
                             </li>
                         </ul>
                     </li>
+                    @endif
+                    @can('isAdmin')
                     <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="nav-icon fa fa-th"></i>
-                            <p>
-                                Simple Link
-                                <span class="right badge badge-danger">New</span>
-                            </p>
+                        <router-link to="/developer" class="nav-link">
+                            <i class="fas fa-cogs nav-icon"></i>
+                            <p>Developer</p>
+                        </router-link>
+                    </li>
+                    @endcan
+                    <li class="nav-item">
+                        <router-link to="/profile" class="nav-link">
+                            <i class="fa fa-user nav-icon yellow"></i>
+                            <p>Profile</p>
+                        </router-link>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                            <i class="fa fa-power-off nav-icon red"></i>
+                            <p>{{ __('Logout') }}</p>
                         </a>
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                            @csrf
+                        </form>
                     </li>
                 </ul>
             </nav>
@@ -121,28 +126,13 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
     <!-- Content Wrapper. Contains page content -->
     <div class="content-wrapper">
-        <!-- Content Header (Page header) -->
-        <div class="content-header">
-            <div class="container-fluid">
-                <div class="row mb-2">
-                    <div class="col-sm-6">
-                        <h1 class="m-0 text-dark">Starter Page</h1>
-                    </div><!-- /.col -->
-                    <div class="col-sm-6">
-                        <ol class="breadcrumb float-sm-right">
-                            <li class="breadcrumb-item"><a href="#">Home</a></li>
-                            <li class="breadcrumb-item active">Starter Page</li>
-                        </ol>
-                    </div><!-- /.col -->
-                </div><!-- /.row -->
-            </div><!-- /.container-fluid -->
-        </div>
-        <!-- /.content-header -->
 
         <!-- Main content -->
         <div class="content">
             <div class="container-fluid">
-  
+                <router-view></router-view>
+                <!-- set progressbar -->
+                <vue-progress-bar></vue-progress-bar>
             </div><!-- /.container-fluid -->
         </div>
         <!-- /.content -->
@@ -164,6 +154,11 @@ scratch. This page gets rid of all links and provides the needed markup only.
 <!-- REQUIRED SCRIPTS -->
 
 <!-- app js  -->
+@auth
+    <script>
+        window.user = @json(auth()->user())
+    </script>
+@endauth
 <script src="/js/app.js"></script>
 </body>
 </html>
